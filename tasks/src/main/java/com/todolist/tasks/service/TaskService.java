@@ -1,14 +1,14 @@
 package com.todolist.tasks.service;
 
 import com.todolist.tasks.entity.Task;
+import com.todolist.tasks.exception.TaskNotFoundException;
 import com.todolist.tasks.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
-@Service
-public class TaskService {
+@Service   
+public class TaskService  {
 
     private final TaskRepository taskRepository;
 
@@ -25,37 +25,33 @@ public class TaskService {
     }
 
     public Task getTaskById(Long id) {
-        Optional<Task> task = taskRepository.findById(id);
-        return task.orElse(null);
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
     }
 
     public Task updateTask(Long id, Task updatedTask) {
-        Optional<Task> existingTask = taskRepository.findById(id);
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
 
-        if (existingTask.isPresent()) {
-            Task task = existingTask.get();
-            task.setTitle(updatedTask.getTitle());
-            task.setDescription(updatedTask.getDescription());
-            task.setCompleted(updatedTask.isCompleted());
-            return taskRepository.save(task);
-        }
+        task.setTitle(updatedTask.getTitle());
+        task.setDescription(updatedTask.getDescription());
+        task.setCompleted(updatedTask.isCompleted());
 
-        return null;
+        return taskRepository.save(task);
     }
 
-    public void deleteTask(Long id) {
-        taskRepository.deleteById(id);
+    public void deleteTask(Long id)throws TaskNotFoundException {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
+
+        taskRepository.delete(task);
     }
 
-    public Task markTaskAsCompleted(Long id) {
-        Optional<Task> existingTask = taskRepository.findById(id);
+    public Task markTaskAsCompleted(Long id) throws TaskNotFoundException{
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found with id: " + id));
 
-        if (existingTask.isPresent()) {
-            Task task = existingTask.get();
-            task.setCompleted(true);
-            return taskRepository.save(task);
-        }
-
-        return null;
+        task.setCompleted(true);
+        return taskRepository.save(task);
     }
 }
